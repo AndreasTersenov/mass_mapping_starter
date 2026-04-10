@@ -1,147 +1,135 @@
-# Mass mapping starter pack
+# Mass Mapping Starter
 
-This folder lets collaborators:
-1. download selected kappaTNG runs,
-2. build kappa subsets with wlmmuq-style redshift combination,
-3. generate realistic noisy/masked shear maps,
-4. produce quick-look plots.
+Minimal, shareable weak-lensing mass-mapping starter repository.
 
-## Included examples
+## Repository layout
+
+- `scripts/` — runnable command-line scripts
+  - `download_kappatng_runs.py`
+  - `prepare_kappatng_subset.py`
+  - `generate_shear_from_kappa.py`
+  - `plot_bundle_outputs.py`
+  - `prepare_noise_mask_sizes.py`
+- `operators.py`, `noise_mask.py` — core NumPy operators and noise/mask helpers
+- `data/` — reference assets and example outputs
+- `notebooks/simple_forward_model_demo.ipynb` — short end-to-end notebook demo
+
+## Included example outputs
 
 - `data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz`  
-  10 combined-redshift kappa maps, shape `(10, 384, 384)`.
-- `data/shear_subset_lp001_runs001-010_wlmmuq_384.npz`  
-  Shear outputs for the same 10 maps.
-- `data/cosmos_noise_mask_384.npz` and `data/cosmos_noise_mask_256.npz`  
-  Precomputed COSMOS-derived noise/mask files.
-
-So yes: the currently produced example maps are **384x384**.
-
-## Scripts
-
-- `download_kappatng_runs.py`  
-  Download chosen LP/run HDF5 files from the official kappaTNG server.
-- `prepare_kappatng_subset.py`  
-  Export a compact kappa subset (`.npz`) from downloaded HDF5 files.
-- `generate_shear_from_kappa.py`  
-  Apply KS forward model and COSMOS-like mask/noise.
-- `plot_bundle_outputs.py`  
-  Save viridis quick-look PNGs (includes `gamma1` and `gamma2`).
-- `prepare_noise_mask_sizes.py`  
-  Generate additional center-cropped mask/noise assets (e.g. 256 from 384).
-- `simple_forward_model_demo.ipynb`  
-  Short notebook example using these scripts/modules end-to-end.
-- `operators.py`, `noise_mask.py`  
-  Core NumPy operators and noise helpers.
+  `kappa.shape = (10, 384, 384)`
+- `data/shear_subset_lp001_runs001-010_wlmmuq_384.npz`
+- `data/kappa_subset_lp001_runs001-010_wlmmuq_256.npz`
+- `data/shear_subset_lp001_runs001-010_wlmmuq_256.npz`
+- `data/cosmos_noise_mask_384.npz`
+- `data/cosmos_noise_mask_256.npz`
+- Plot set in `data/plots/`
 
 ## Requirements
 
 - Python 3.10+
 - `numpy`
 - `h5py`
-- `matplotlib` (for plots)
+- `matplotlib` (for plotting)
 
-## How to make 10 maps (or more)
+## Quick start (384x384)
 
-From repository root:
+Run from repository root:
 
 ```bash
-# 1) Download kappaTNG runs (example: 10 runs from LP001)
-python collab_massmap_bundle/download_kappatng_runs.py \
+# 1) Download source runs (example: 10 runs from LP001)
+python scripts/download_kappatng_runs.py \
   --dataset fullphys \
   --lp-index 1 \
   --start-run 1 \
   --n-runs 10 \
-  --output-root collab_massmap_bundle/data/kappaTNG_fullphys
+  --output-root data/kappaTNG_fullphys
 
-# 2) Build kappa subset (wlmmuq-style redshift combination z01..z40)
-python collab_massmap_bundle/prepare_kappatng_subset.py \
-  --ktng-dir collab_massmap_bundle/data/kappaTNG_fullphys \
+# 2) Build kappa subset (wlmmuq-like redshift combination: z01..z40)
+python scripts/prepare_kappatng_subset.py \
+  --ktng-dir data/kappaTNG_fullphys \
   --lp-index 1 \
   --start-run 1 \
   --n-maps 10 \
   --redshift-mode wlmmuq \
   --crop-size 384 \
   --remove-mean \
-  -o collab_massmap_bundle/data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz
+  -o data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz
 
-# 3) Generate shear maps (auto-selects cosmos_noise_mask_384.npz)
-python collab_massmap_bundle/generate_shear_from_kappa.py \
-  --kappa-file collab_massmap_bundle/data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz \
+# 3) Generate noisy/masked shear maps
+python scripts/generate_shear_from_kappa.py \
+  --kappa-file data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz \
   --seed 42 \
-  -o collab_massmap_bundle/data/shear_subset_lp001_runs001-010_wlmmuq_384.npz
+  -o data/shear_subset_lp001_runs001-010_wlmmuq_384.npz
 
-# 4) Plot diagnostics (viridis colormap)
-python collab_massmap_bundle/plot_bundle_outputs.py \
-  --kappa-file collab_massmap_bundle/data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz \
-  --shear-file collab_massmap_bundle/data/shear_subset_lp001_runs001-010_wlmmuq_384.npz \
-  --output-dir collab_massmap_bundle/data/plots \
+# 4) Plot diagnostics
+python scripts/plot_bundle_outputs.py \
+  --kappa-file data/kappa_subset_lp001_runs001-010_wlmmuq_384.npz \
+  --shear-file data/shear_subset_lp001_runs001-010_wlmmuq_384.npz \
+  --output-dir data/plots \
   --max-maps 10
 ```
 
-To make **more than 10**, increase both:
-- `download_kappatng_runs.py --n-runs`
-- `prepare_kappatng_subset.py --n-maps`
+To generate more than 10 maps, increase both `--n-runs` and `--n-maps`.
 
-## 256x256 option
-
-This is supported directly:
+## 256x256 workflow
 
 ```bash
-# Build 256 mask/noise asset (already provided as data/cosmos_noise_mask_256.npz)
-python collab_massmap_bundle/prepare_noise_mask_sizes.py \
-  --input-file collab_massmap_bundle/data/cosmos_noise_mask_384.npz \
+# Ensure 256 mask/noise asset exists (already included in this repo)
+python scripts/prepare_noise_mask_sizes.py \
+  --input-file data/cosmos_noise_mask_384.npz \
   --sizes 256 \
-  --output-dir collab_massmap_bundle/data
+  --output-dir data
 
-# Build 256 kappa subset
-python collab_massmap_bundle/prepare_kappatng_subset.py \
-  --ktng-dir collab_massmap_bundle/data/kappaTNG_fullphys \
+# Build 256 subset
+python scripts/prepare_kappatng_subset.py \
+  --ktng-dir data/kappaTNG_fullphys \
   --lp-index 1 \
   --start-run 1 \
   --n-maps 10 \
   --redshift-mode wlmmuq \
   --crop-size 256 \
   --remove-mean \
-  -o collab_massmap_bundle/data/kappa_subset_lp001_runs001-010_wlmmuq_256.npz
+  -o data/kappa_subset_lp001_runs001-010_wlmmuq_256.npz
 
-# Generate 256 shear subset (auto-selects cosmos_noise_mask_256.npz)
-python collab_massmap_bundle/generate_shear_from_kappa.py \
-  --kappa-file collab_massmap_bundle/data/kappa_subset_lp001_runs001-010_wlmmuq_256.npz \
+# Generate 256 shear subset
+python scripts/generate_shear_from_kappa.py \
+  --kappa-file data/kappa_subset_lp001_runs001-010_wlmmuq_256.npz \
   --seed 42 \
-  -o collab_massmap_bundle/data/shear_subset_lp001_runs001-010_wlmmuq_256.npz
+  -o data/shear_subset_lp001_runs001-010_wlmmuq_256.npz
 ```
 
-## Noise model (what is added?)
+## Noise model
 
-- Noise is complex Gaussian per pixel:
-  - `noise = (N(0,1) + i N(0,1)) * std_noise(x, y)`
-- The `std_noise` map comes from COSMOS galaxy catalog statistics and is spatially varying.
-- In the original COSMOS construction:
-  \[
-  \sigma_\mathrm{noise}(x,y) = \sigma_e \frac{\sqrt{\sum_i w_i^2}}{\sum_i w_i}
-  \]
-  where sums are over galaxies in that pixel.
+Noise is added as complex Gaussian per pixel:
 
-So yes, it is effectively **galaxy-density / weight dependent** through the local per-pixel weights and counts.
+\[
+n(x,y) = \left[\mathcal{N}(0,1) + i\,\mathcal{N}(0,1)\right]\sigma_{\mathrm{noise}}(x,y).
+\]
 
-## Output format
+`std_noise` is spatially varying and derived from COSMOS galaxy catalog statistics. In the original COSMOS construction:
 
-`generate_shear_from_kappa.py` writes:
+\[
+\sigma_{\mathrm{noise}}(x,y)=\sigma_e \frac{\sqrt{\sum_i w_i^2}}{\sum_i w_i},
+\]
 
-- `kappa_true` (float32, `(n_maps, nx, ny)`)
-- `gamma_clean` (complex64, `(n_maps, nx, ny)`)
-- `gamma_noisy` (complex64, `(n_maps, nx, ny)`)
-- `noise` (complex64, `(n_maps, nx, ny)`)
-- `kappa_ks_e`, `kappa_ks_b` (float32, `(n_maps, nx, ny)`)
-- `std_noise` (float32, `(nx, ny)`)
-- `mask` (bool, `(nx, ny)`)
-- `extent` (optional, `(4,)`)
+with sums over galaxies in each pixel. This is effectively galaxy-density / weight dependent.
 
-## Notebook
+## Output format (`generate_shear_from_kappa.py`)
 
-Open and run:
+- `kappa_true` — float32, `(n_maps, nx, ny)`
+- `gamma_clean` — complex64, `(n_maps, nx, ny)`
+- `gamma_noisy` — complex64, `(n_maps, nx, ny)`
+- `noise` — complex64, `(n_maps, nx, ny)`
+- `kappa_ks_e`, `kappa_ks_b` — float32, `(n_maps, nx, ny)`
+- `std_noise` — float32, `(nx, ny)`
+- `mask` — bool, `(nx, ny)`
+- `extent` — optional float32, `(4,)`
 
-`collab_massmap_bundle/simple_forward_model_demo.ipynb`
+## Notebook demo
 
-It loads a kappa subset, computes clean shear, adds COSMOS mask/noise, and plots all key outputs.
+Open:
+
+`notebooks/simple_forward_model_demo.ipynb`
+
+It demonstrates loading kappa maps, converting to shear, adding COSMOS mask/noise, and plotting results.
