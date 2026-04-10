@@ -103,15 +103,15 @@ python scripts/generate_shear_from_kappa.py \
 
 Noise is added as complex Gaussian per pixel:
 
-\[
+$$
 n(x,y) = \left[\mathcal{N}(0,1) + i\,\mathcal{N}(0,1)\right]\sigma_{\mathrm{noise}}(x,y).
-\]
+$$
 
 `std_noise` is spatially varying and derived from COSMOS galaxy catalog statistics. In the original COSMOS construction:
 
-\[
+$$
 \sigma_{\mathrm{noise}}(x,y)=\sigma_e \frac{\sqrt{\sum_i w_i^2}}{\sum_i w_i},
-\]
+$$
 
 with sums over galaxies in each pixel. This is effectively galaxy-density / weight dependent.
 
