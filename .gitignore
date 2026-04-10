@@ -1,0 +1,6 @@
+__pycache__/
+.ipynb_checkpoints/
+
+# Raw downloaded kappaTNG source runs are very large; keep only placeholder.
+data/kappaTNG_fullphys/*
+!data/kappaTNG_fullphys/.gitkeep
